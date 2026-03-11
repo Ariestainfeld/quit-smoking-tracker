@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+html {
+  direction: rtl;
+}
+
+body {
+  margin: 0;
+  background-color: #111827;
+  color: #f3f4f6;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  min-height: 100dvh;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 transparent;
+}
+
+.rating-option {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  cursor: pointer;
+}
+.rating-option:hover {
+  transform: scale(1.15);
+}
+.rating-option.selected {
+  transform: scale(1.25);
+}
+
+@keyframes badge-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(34, 197, 94, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.8); }
+}
+.badge-new {
+  animation: badge-glow 2s ease-in-out infinite;
+}
+
+@keyframes float-up {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-60px); }
+}
+.points-popup {
+  animation: float-up 1.5s ease-out forwards;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
