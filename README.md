@@ -1,73 +1,149 @@
-# React + TypeScript + Vite
+# Quit Smoking Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
+Web app to help track and reduce smoking through awareness.
+Before each cigarette: rate craving (1-5) + select reason.
+After: rate enjoyment (1-5).
+The gap between craving and enjoyment is the core insight.
 
-Currently, two official plugins are available:
+Hebrew RTL, dark theme, mobile-first.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Live URL
+https://quit-smoking-app-alpha.vercel.app
 
-## React Compiler
+## GitHub
+https://github.com/Ariestainfeld/quit-smoking-tracker
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
+- Vite + React 19 + TypeScript
+- Tailwind CSS v4
+- Zustand (persist middleware) — state in localStorage
+- Recharts — charts
+- react-router-dom (HashRouter)
+- No backend — all data in localStorage
 
-## Expanding the ESLint configuration
+## Data Storage
+localStorage only. Each device stores its own data independently.
+Keys: `qst_cigarettes`, `qst_app`, `qst_achievements`
+Export/import available in Settings page.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Data Model
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### CigaretteEntry
+```typescript
+{
+  id: string;              // crypto.randomUUID()
+  startedAt: string;       // ISO UTC — moment of lighting
+  finishedAt: string|null; // ISO UTC — moment finished (null = in progress)
+  craving: number;         // 1-5
+  reason: SmokingReason;   // from predefined list
+  reasonCustom?: string;   // free text if "other"
+  enjoyment: number|null;  // 1-5 (null = in progress)
+}
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### SmokingReason (7 options)
+`'קפה' | 'אחרי אוכל' | 'צריך להתרכז' | 'עצבני/לא רגוע' | 'עם חברים' | 'הפסקה' | 'אחר'`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### UserProfile
+```typescript
+{ name: string; baseline: number; createdAt: string; }
 ```
+
+### AchievementState
+```typescript
+{ points: number; level: number; unlockedBadges: [...]; streakDays: number; longestStreak: number; }
+```
+
+## Features
+
+### Pages (5 + onboarding)
+1. **Dashboard** — greeting, daily counter vs baseline, "light up" button, today's log, quick stats
+2. **History** — expandable day cards with all entries
+3. **Analytics** — 6 charts + period selector (7d / 30d / all)
+4. **Achievements** — 15 badges, 10 levels, XP bar, points
+5. **Settings** — profile edit, stats, export/import JSON, reset
+6. **Onboarding** — 2-step wizard (name + baseline)
+
+### Logging Flow (LogModal — 5 steps)
+1. Craving rating (1-5 with emoji faces)
+2. Reason selection (7 chips)
+3. Confirm + smart feedback message
+4. Enjoyment rating (after finishing)
+5. Post-smoke feedback + points earned
+
+### Analytics (6 charts)
+1. Daily trend (LineChart) — cigarettes/day + baseline reference line
+2. Reason breakdown (PieChart)
+3. Craving vs Enjoyment by reason (BarChart)
+4. Unnecessary cigarettes % (metric card)
+5. Hourly heatmap (6:00-23:00)
+6. Week vs last week comparison (3 metrics)
+
+### Smart Feedback
+- Pace-based: today vs historical average at same hour
+- Baseline proximity warning
+- Pattern-based: low enjoyment for specific reasons
+- Gap-based post-smoke: craving vs enjoyment analysis
+- Time-based: late night smoking notice
+- Streak encouragement
+
+### Gamification
+- **Points**: 5 base + 3 first-of-day + 5 awareness gap + day-end bonuses
+- **10 Levels**: matikhil -> aluf (0-8000 pts)
+- **15 Badges**: milestones, reduction, consistency, awareness, special
+- **Streaks**: day = count < yesterday OR count < overall average
+
+## File Structure
+```
+src/
+  types/index.ts              — all TypeScript interfaces
+  constants/
+    reasons.ts                — smoking reasons, craving/enjoyment labels
+    levels.ts                 — 10 level definitions
+    badges.ts                 — 15 badge definitions with evaluate functions
+  stores/
+    useAppStore.ts            — profile + isOnboarded (key: qst_app)
+    useCigaretteStore.ts      — entries + CRUD (key: qst_cigarettes)
+    useAchievementStore.ts    — points, level, badges (key: qst_achievements)
+  lib/
+    dateUtils.ts              — todayStr, toLocalDate, formatDateHebrew, formatTime, etc.
+    analytics.ts              — groupByDate, dailyStats, paceComparison, reasonAnalysis, etc.
+    feedback.ts               — pre-smoke + post-smoke feedback generation
+    gamification.ts           — points calc, streak calc, badge evaluation
+  components/
+    layout/AppShell.tsx       — Outlet + BottomNav wrapper
+    layout/BottomNav.tsx      — 5-tab bottom nav (z-50)
+    shared/RatingScale.tsx    — reusable 1-5 emoji rating
+    logging/LogModal.tsx      — 5-step cigarette logging flow (z-[60])
+  pages/
+    Onboarding.tsx            — 2-step wizard
+    Dashboard.tsx             — main dashboard
+    History.tsx               — day-by-day expandable history
+    Analytics.tsx             — 6 charts
+    Achievements.tsx          — badges + level progress
+    Settings.tsx              — profile, stats, export/import
+```
+
+## Bugs Fixed
+1. **Modal z-index overlap** — LogModal and BottomNav both at z-50, click hit nav instead of modal button. Fix: raised modal to z-[60], added pb-8.
+2. **Timezone bug** — startedAt stored as UTC ISO but compared against local date. At night in Israel (UTC+3), dates mismatched. Fix: `toLocalDate()` helper in dateUtils.ts, updated 13 files.
+
+## Development
+```bash
+npm install
+npm run dev      # localhost:5173 (+ network access via host:true)
+npm run build    # production build to dist/
+```
+
+## Deployment
+Vercel auto-deploys on push to master branch.
+Project: ariestainfelds-projects/quit-smoking-app
+
+## Design Decisions
+- No financial tracking (explicitly excluded by requirement)
+- No backend/push notifications — pure client-side app
+- HashRouter for static file compatibility
+- Baseline = estimated daily cigarettes at start of tracking (for comparison only)
+- Dark theme + RTL throughout
+- Emoji-rich UI (navigation, ratings, badges, messages)
