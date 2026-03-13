@@ -17,6 +17,8 @@ export interface CigaretteEntry {
   reason: SmokingReason;
   reasonCustom?: string;
   enjoyment: number | null; // 1-5
+  autoFinished?: boolean;  // true if auto-closed after timeout
+  retroactive?: boolean;   // true if logged after the fact
 }
 
 export interface UserProfile {

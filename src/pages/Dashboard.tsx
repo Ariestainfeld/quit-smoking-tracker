@@ -7,10 +7,19 @@ import { getTimeGreeting, formatTime } from '../lib/dateUtils';
 import { getLevelForPoints } from '../constants/levels';
 import { SMOKING_REASONS } from '../constants/reasons';
 import LogModal from '../components/logging/LogModal';
+import RetroactiveModal from '../components/logging/RetroactiveModal';
+import { useAutoClose, requestNotificationPermission } from '../lib/useAutoClose';
 
 export default function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'new' | 'finish'>('new');
+  const [retroOpen, setRetroOpen] = useState(false);
+
+  // Auto-close active cigarettes after 15 min
+  useAutoClose();
+
+  // Request notification permission on first render
+  useEffect(() => { requestNotificationPermission(); }, []);
 
   const entries = useCigaretteStore((s) => s.entries);
   const activeEntryId = useCigaretteStore((s) => s.activeEntryId);
@@ -110,12 +119,20 @@ export default function Dashboard() {
 
       {/* Light Up Button */}
       {!activeEntry && (
-        <button
-          onClick={handleLightUp}
-          className="w-full bg-gradient-to-l from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl py-5 text-xl font-bold transition-all active:scale-95 shadow-lg shadow-green-500/20"
-        >
-          🚬 מדליק סיגריה
-        </button>
+        <div className="space-y-2">
+          <button
+            onClick={handleLightUp}
+            className="w-full bg-gradient-to-l from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl py-5 text-xl font-bold transition-all active:scale-95 shadow-lg shadow-green-500/20"
+          >
+            🚬 מדליק סיגריה
+          </button>
+          <button
+            onClick={() => setRetroOpen(true)}
+            className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl py-3 text-sm transition-colors border border-gray-700"
+          >
+            📝 שכחתי לרשום סיגריה
+          </button>
+        </div>
       )}
 
       {/* Today's Log */}
@@ -133,8 +150,13 @@ export default function Dashboard() {
                     <span className="text-gray-300">{reasonInfo?.label || entry.reason}</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    {entry.retroactive && (
+                      <span className="text-blue-400 text-xs">📝</span>
+                    )}
                     <span className="text-orange-300 text-xs">חשק {entry.craving}</span>
-                    {entry.enjoyment !== null ? (
+                    {entry.autoFinished ? (
+                      <span className="text-red-400 text-xs">🔴 אוטו׳</span>
+                    ) : entry.enjoyment !== null ? (
                       <span className="text-green-300 text-xs">הנאה {entry.enjoyment}</span>
                     ) : (
                       <span className="text-amber-400 text-xs">מעשן...</span>
@@ -166,6 +188,7 @@ export default function Dashboard() {
       )}
 
       <LogModal isOpen={modalOpen} onClose={() => setModalOpen(false)} mode={modalMode} />
+      <RetroactiveModal isOpen={retroOpen} onClose={() => setRetroOpen(false)} />
     </div>
   );
 }

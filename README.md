@@ -80,6 +80,21 @@ Export/import available in Settings page.
 5. Hourly heatmap (6:00-23:00)
 6. Week vs last week comparison (3 metrics)
 
+### Auto-Close (Unfinished Cigarettes)
+- 5 min after lighting → push notification: "עברו 5 דקות — סיימת?"
+- 10 min → second notification: "עוד 5 דקות תיסגר אוטומטית"
+- 15 min → auto-closes entry (enjoyment=null, marked `autoFinished`)
+- Uses browser Notification API (requests permission on first visit)
+- Timers survive page refresh (recalculates remaining time from startedAt)
+
+### Retroactive Logging
+- "שכחתי לרשום סיגריה" button on Dashboard
+- Pick date (today or yesterday) + time
+- "זוכר איך היה?" — Yes/No choice:
+  - **No**: logs minimal entry (timestamp + default craving 3 + reason "לא זוכר"), +2 points
+  - **Yes**: full flow — craving (1-5) → reason → enjoyment (1-5), full points
+- Entries marked `retroactive: true`, sorted chronologically into history
+
 ### Smart Feedback
 - Pace-based: today vs historical average at same hour
 - Baseline proximity warning
@@ -123,6 +138,12 @@ src/
     Analytics.tsx             — 6 charts
     Achievements.tsx          — badges + level progress
     Settings.tsx              — profile, stats, export/import
+```
+
+## New Files (this update)
+```
+src/lib/useAutoClose.ts                    — auto-close hook + notification helpers
+src/components/logging/RetroactiveModal.tsx — retroactive entry modal (5 steps)
 ```
 
 ## Bugs Fixed

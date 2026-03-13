@@ -95,10 +95,15 @@ export default function History() {
                         <span className="text-gray-400">{reasonInfo?.label}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
+                        {entry.retroactive && (
+                          <span className="text-blue-400" title="בדיעבד">📝</span>
+                        )}
                         <span title="חשק">
                           {cravingInfo?.emoji} {entry.craving}
                         </span>
-                        {enjoyInfo ? (
+                        {entry.autoFinished ? (
+                          <span className="text-red-400" title="כובה אוטומטית">🔴</span>
+                        ) : enjoyInfo ? (
                           <span title="הנאה">
                             {enjoyInfo.emoji} {entry.enjoyment}
                           </span>

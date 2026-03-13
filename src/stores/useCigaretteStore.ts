@@ -12,6 +12,8 @@ interface CigaretteState {
 
   startCigarette: (craving: number, reason: SmokingReason, reasonCustom?: string) => CigaretteEntry;
   finishCigarette: (id: string, enjoyment: number) => void;
+  autoFinishCigarette: (id: string) => void;
+  addRetroactive: (entry: Omit<CigaretteEntry, 'id'>) => CigaretteEntry;
   deleteEntry: (id: string) => void;
 
   getToday: () => CigaretteEntry[];
@@ -50,6 +52,31 @@ export const useCigaretteStore = create<CigaretteState>()(
           ),
           activeEntryId: state.activeEntryId === id ? null : state.activeEntryId,
         }));
+      },
+
+      autoFinishCigarette: (id) => {
+        set((state) => ({
+          entries: state.entries.map((e) =>
+            e.id === id
+              ? { ...e, finishedAt: new Date().toISOString(), enjoyment: null, autoFinished: true }
+              : e
+          ),
+          activeEntryId: state.activeEntryId === id ? null : state.activeEntryId,
+        }));
+      },
+
+      addRetroactive: (entryData) => {
+        const entry: CigaretteEntry = {
+          id: crypto.randomUUID(),
+          ...entryData,
+          retroactive: true,
+        };
+        set((state) => ({
+          entries: [...state.entries, entry].sort(
+            (a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()
+          ),
+        }));
+        return entry;
       },
 
       deleteEntry: (id) => {
